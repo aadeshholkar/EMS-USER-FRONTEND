@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
+import { motion } from "framer-motion";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -45,21 +46,24 @@ export default function Login() {
 
     try {
       setLoading(true);
-      const endpoint = isLogin ? "/students/login" : "/students/register";
+      const endpoint = isLogin ? "/api/student/login" : "/api/student/register";
       const payload = isLogin
         ? { email, password }
         : { email, password, PRN: PRN.toUpperCase() };
-
+      
+      console.log(payload);
       const { data } = await axios.post(endpoint, payload);
 
       if (isLogin) {
-        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("userToken", data.token);
         localStorage.setItem("student", JSON.stringify(data.student));
         toast.success("Login successful");
         navigate("/");
       } else {
         toast.success("Registration successful. Please login.");
         setIsLogin(true);
+        setPassword("");
+        setPRN("");
       }
     } catch (err) {
       const errorMessage =
@@ -73,8 +77,19 @@ export default function Login() {
   return (
     <section className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
       <div className="relative py-3 w-full max-w-xl sm:mx-auto">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-300 to-blue-600 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl transition-transform duration-500"></div>
-        <div className="relative px-6 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-16">
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-blue-300 to-blue-600 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl"
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.4 }}
+        ></motion.div>
+
+        <motion.div
+          className="relative px-6 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-16"
+          initial={{ y: 40, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 120 }}
+        >
           <div className="max-w-xl mx-auto">
             <div className="flex justify-center mb-8">
               <img
@@ -89,13 +104,17 @@ export default function Login() {
                   {isLogin ? "Login" : "Register"} to EventHub
                 </h2>
                 <p className="text-sm text-gray-600">
-                  {isLogin ? "Access your event dashboard" : "Create a new student account"}
+                  {isLogin
+                    ? "Access your event dashboard"
+                    : "Create a new student account"}
                 </p>
               </div>
 
               <form className="pt-6 space-y-6" onSubmit={handleSubmit}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
                   <input
                     type="email"
                     required
@@ -106,8 +125,14 @@ export default function Login() {
                 </div>
 
                 {!isLogin && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">PRN</label>
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <label className="block text-sm font-medium text-gray-700">
+                      PRN
+                    </label>
                     <input
                       type="text"
                       required
@@ -115,11 +140,13 @@ export default function Login() {
                       onChange={(e) => setPRN(e.target.value.toUpperCase())}
                       className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 uppercase"
                     />
-                  </div>
+                  </motion.div>
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Password</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Password
+                  </label>
                   <input
                     type="password"
                     required
@@ -136,13 +163,13 @@ export default function Login() {
                 >
                   {loading ? (
                     <span className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
-                  ) : (
-                    isLogin ? "Sign In" : "Register"
-                  )}
+                  ) : isLogin ? "Sign In" : "Register"}
                 </button>
 
                 <p className="text-sm text-center text-gray-600 mt-4">
-                  {isLogin ? "Don't have an account?" : "Already registered?"}{" "}
+                  {isLogin
+                    ? "Don't have an account?"
+                    : "Already registered?"}{" "}
                   <button
                     type="button"
                     onClick={handleToggle}
@@ -154,7 +181,7 @@ export default function Login() {
               </form>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

@@ -1,42 +1,39 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import Login from "./pages/Login";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import EventDetails from "./pages/EventDetails";
-import Layout from "./components/Layout";
-import Profile from "./pages/Profile";
-import PrivateRoute from "./components/PrivateRoute";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import Login from "./pages/Login";
+import MainLayout from "./components/MainLayout";
 
-export default function App() {
+function App() {
+  // const isAuthenticated = !!localStorage.getItem("userToken");
+
   return (
     <Router>
       <Routes>
-        {/* Public Login Route */}
         <Route path="/login" element={<Login />} />
 
-        {/* Protected Layout Route */}
-        <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
-          <Route index element={<Dashboard />} /> {/* <== FIXED */}
-          <Route path="/event-details/:id" element={<EventDetails />} />
-          <Route path="/profile" element={<Profile />} />
-        </Route>
-
-        {/* Catch-all Route */}
+        {
+          <Route
+            path="/"
+            element={
+              <MainLayout>
+                <Dashboard />
+              </MainLayout>
+            }
+          />
+        }
         <Route
-          path="*"
+          path="/event-details/:id"
           element={
-            localStorage.getItem("authToken") ? (
-              <Navigate to="/" replace />
-            ) : (
-              <Navigate to="/login" replace />
-            )
+            <MainLayout>
+              <EventDetails />
+            </MainLayout>
           }
         />
+        {/* Add more routes here */}
       </Routes>
-
-      <ToastContainer position="top-center" autoClose={3000} />
     </Router>
   );
 }
+
+export default App;

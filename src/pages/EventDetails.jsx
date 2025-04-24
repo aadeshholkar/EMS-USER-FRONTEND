@@ -1,6 +1,26 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import axios from "../utils/axios";
+import MainLayout from "../components/MainLayout";
+import Loader from "../components/Loader";
+import { motion } from "framer-motion";
+
+const badgeColors = {
+  priority: {
+    High: "bg-red-100 text-red-700",
+    Medium: "bg-yellow-100 text-yellow-700",
+    Low: "bg-green-100 text-green-700",
+  },
+  status: {
+    Headline: "bg-indigo-100 text-indigo-700",
+    Regular: "bg-gray-100 text-gray-700",
+  },
+  category: {
+    Academic: "bg-blue-100 text-blue-700",
+    Internship: "bg-purple-100 text-purple-700",
+    Placement: "bg-pink-100 text-pink-700",
+  },
+};
 
 export default function EventDetails() {
   const { id } = useParams();
@@ -9,15 +29,13 @@ export default function EventDetails() {
 
   const fetchEvent = async () => {
     try {
-      const token = localStorage.getItem("authToken");
-      const { data } = await axios.get(`/events/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const token = localStorage.getItem("userToken");
+      const { data } = await axios.get(`/api/event/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      setEvent(data);
-    } catch (error) {
-      console.error("Failed to fetch event details", error);
+      setEvent(data.event);
+    } catch (err) {
+      console.error("Error loading event:", err);
     } finally {
       setLoading(false);
     }
@@ -27,84 +45,159 @@ export default function EventDetails() {
     fetchEvent();
   }, [id]);
 
-  if (loading) return <div className="text-center py-10">Loading event details...</div>;
-  if (!event) return <div className="text-center py-10 text-red-500">Event not found</div>;
+  if (loading) return <Loader />;
+
+  if (!event)
+    return (
+        <div className="text-center text-red-600 mt-20 text-lg">
+          Event not found.
+        </div>
+    );
+
+  const {
+    name,
+    subheading,
+    date,
+    startTime,
+    endTime,
+    location,
+    category,
+    department,
+    priority,
+    status,
+    classCode,
+    description,
+    contactPerson,
+    contactPhone,
+    contactEmail,
+    emailMeta,
+  } = event;
 
   return (
-    <section className="bg-gray-100 min-h-screen px-4 py-10 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-10">
-        {/* Header Banner */}
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <div className="h-64 bg-gradient-to-r from-gray-700 to-gray-900 flex items-end p-6 text-white">
-            <div>
-              <div className="space-x-2 mb-2">
-                <span className="bg-red-600 text-white px-3 py-1 text-xs font-semibold rounded-full">{event.priority} Priority</span>
-                <span className="bg-purple-600 text-white px-3 py-1 text-xs font-semibold rounded-full">{event.category}</span>
-                <span className="bg-indigo-600 text-white px-3 py-1 text-xs font-semibold rounded-full">{event.status}</span>
-              </div>
-              <h1 className="text-3xl font-bold">{event.name}</h1>
-              <div className="mt-2 text-sm flex flex-col sm:flex-row sm:space-x-4 text-gray-200">
-                <span>📅 {new Date(event.date).toLocaleDateString()} • {event.startTime} - {event.endTime}</span>
-                <span>📍 {event.location}</span>
-                <span>⭐ Registration Deadline: {event.deadline || "TBD"}</span>
-              </div>
-            </div>
+      <motion.section
+        className="max-w-5xl mx-auto bg-white rounded-lg shadow p-6 space-y-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        {/* Title and Back Link */}
+        <div className="flex items-center justify-between border-b pb-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">{name}</h2>
+            {subheading && <p className="text-sm text-gray-500">{subheading}</p>}
+          </div>
+          <Link to="/" className="text-sm text-blue-600 hover:underline font-medium">
+            ← Back to Dashboard
+          </Link>
+        </div>
+
+        {/* Meta Badges */}
+        <div className="flex flex-wrap gap-2">
+          <span className={`px-3 py-1 text-sm rounded-full ${badgeColors.category[category]}`}>
+            {category}
+          </span>
+          <span className={`px-3 py-1 text-sm rounded-full ${badgeColors.priority[priority]}`}>
+            Priority: {priority}
+          </span>
+          <span className={`px-3 py-1 text-sm rounded-full ${badgeColors.status[status]}`}>
+            {status}
+          </span>
+          {classCode && (
+            <span className="px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-800">
+              Class: {classCode}
+            </span>
+          )}
+          {department && (
+            <span className="px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-800">
+              Dept: {department}
+            </span>
+          )}
+        </div>
+
+        {/* Date and Time */}
+        <div className="grid sm:grid-cols-2 gap-6">
+          <div>
+            <p className="text-sm text-gray-500">Date</p>
+            <p className="text-base font-semibold text-gray-800">
+              {new Date(date).toLocaleDateString()}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Time</p>
+            <p className="text-base font-semibold text-gray-800">
+              {startTime} – {endTime}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Location</p>
+            <p className="text-base font-semibold text-gray-800">
+              {location || "N/A"}
+            </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* About */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-2">About the Event</h2>
-              <p className="text-gray-700">{event.description}</p>
-            </div>
+        {/* Description */}
+        {description && (
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Description</p>
+            <p className="whitespace-pre-line text-gray-700 bg-gray-50 p-4 rounded border text-sm">
+              {description}
+            </p>
+          </div>
+        )}
 
-            {/* Placeholder for Key Highlights */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-2">Key Highlights</h2>
-              <p className="text-gray-500 italic text-sm">To be announced...</p>
-            </div>
+        {/* Contact Details */}
+        {(contactPerson || contactEmail || contactPhone) && (
+          <div className="grid sm:grid-cols-2 gap-6">
+            {contactPerson && (
+              <div>
+                <p className="text-sm text-gray-500">Contact Person</p>
+                <p className="text-base font-semibold text-gray-800">
+                  {contactPerson}
+                </p>
+              </div>
+            )}
+            {contactEmail && (
+              <div>
+                <p className="text-sm text-gray-500">Email</p>
+                <p className="text-base font-semibold text-gray-800">
+                  {contactEmail}
+                </p>
+              </div>
+            )}
+            {contactPhone && (
+              <div>
+                <p className="text-sm text-gray-500">Phone</p>
+                <p className="text-base font-semibold text-gray-800">
+                  {contactPhone}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
-            {/* Placeholder Schedule */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-2">Schedule</h2>
-              <p className="text-gray-500 italic text-sm">Schedule will be shared soon.</p>
+        {/* Email Source Meta */}
+        {emailMeta && (
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">Source Email</h3>
+            <div className="space-y-1 text-sm text-gray-600">
+              <p>
+                <span className="font-medium">Sender:</span> {emailMeta.sender || "N/A"}
+              </p>
+              <p>
+                <span className="font-medium">Subject:</span> {emailMeta.subject || "N/A"}
+              </p>
+              {emailMeta.body && (
+                <>
+                  <p className="font-medium mt-2">Email Body:</p>
+                  <div className="whitespace-pre-line text-gray-700 text-sm mt-1 max-h-64 overflow-y-auto bg-gray-50 border p-3 rounded">
+                    {emailMeta.body}
+                  </div>
+                </>
+              )}
             </div>
           </div>
-
-          {/* Right Sidebar */}
-          <div className="space-y-6">
-            {/* Registration */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-lg font-semibold mb-2">Registration</h2>
-              <p className="text-sm text-gray-600 mb-1">Spots Available</p>
-              <p className="font-semibold text-gray-800 mb-2">-- / --</p>
-              <p className="text-xs text-red-500 mb-4">Registration closes soon</p>
-              <button className="w-full py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700">Register Now</button>
-            </div>
-
-            {/* Organizer Info */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-lg font-semibold mb-2">Contact</h2>
-              <p className="text-sm text-gray-800">{event.contactPerson}</p>
-              <p className="text-sm text-gray-600">{event.contactEmail}</p>
-              {event.contactPhone && <p className="text-sm text-gray-600">{event.contactPhone}</p>}
-            </div>
-
-            {/* Event Stats */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-lg font-semibold mb-2">Event Stats</h2>
-              <ul className="text-sm text-gray-700 space-y-1">
-                <li>🎓 Status: {event.status}</li>
-                <li>🔥 Priority: {event.priority}</li>
-                <li>📅 Date: {new Date(event.date).toLocaleDateString()}</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+        )}
+      </motion.section>
   );
 }
